@@ -38,6 +38,16 @@
     .bubble.me{align-self:flex-end;background:rgba(47,125,255,.15);border-color:rgba(47,125,255,.35)}
     .quick{display:flex;flex-wrap:wrap;gap:8px}
     .chip{border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);padding:8px 10px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:650}
+
+    @keyframes floaty {
+  0%   { transform: translateY(0) translateX(0); }
+  50%  { transform: translateY(-6px) translateX(-2px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+.chatFab{
+  animation: floaty 2.4s ease-in-out infinite;
+}
+
   </style>
 </head>
 <body>
@@ -116,33 +126,40 @@
     toast("");
   }
 
-  function renderQuestions(){
-    const wrap = $("questions");
-    wrap.innerHTML = "";
-    QUESTIONS.forEach(q=>{
-      const div = document.createElement("div");
-      div.className="q";
-      div.innerHTML = `
-        <h3>${esc(q.pregunta)}</h3>
-        <div class="scale">
-          ${Array.from({length:11},(_,i)=>`<div class="btnNum" data-qid="${esc(q.id)}" data-val="${i}">${i}</div>`).join("")}
-        </div>
-        <div class="hint"><span>Nada satisfecho</span><span>Muy satisfecho</span></div>
-      `;
-      wrap.appendChild(div);
-    });
+ function renderQuestions(){
+  const wrap = $("questions");
+  wrap.innerHTML = "";
+  QUESTIONS.forEach(q=>{
+    const max = (q.tipo === "escala5") ? 5 : 10;
+    const min = (q.tipo === "escala5") ? 1 : 0;
 
-    wrap.querySelectorAll(".btnNum").forEach(btn=>{
-      btn.onclick = ()=>{
-        const qid = btn.dataset.qid;
-        const val = Number(btn.dataset.val);
-        const group = btn.parentElement;
-        group.querySelectorAll(".btnNum").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        ANSWERS[qid]=val;
-      };
-    });
-  }
+    const div = document.createElement("div");
+    div.className="q";
+    div.innerHTML = `
+      <h3>${esc(q.pregunta)}</h3>
+      <div class="scale">
+        ${Array.from({length: (max - min + 1)}, (_,k)=> {
+          const v = min + k;
+          return `<div class="btnNum" data-qid="${esc(q.id)}" data-val="${v}">${v}</div>`;
+        }).join("")}
+      </div>
+      <div class="hint"><span>Bajo</span><span>Alto</span></div>
+    `;
+    wrap.appendChild(div);
+  });
+
+  wrap.querySelectorAll(".btnNum").forEach(btn=>{
+    btn.onclick = ()=>{
+      const qid = btn.dataset.qid;
+      const val = Number(btn.dataset.val);
+      const group = btn.parentElement;
+      group.querySelectorAll(".btnNum").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      ANSWERS[qid]=val;
+    };
+  });
+}
+
 
   function validate(){
     for(const q of QUESTIONS){
